@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مراقب الإفصاحات — أعيان للإيجار والاستثمار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0d1b2a;
+  --navy-2: #152338;
+  --navy-3: #1e3050;
+  --gold: #c5944b;
+  --gold-light: #d9b078;
+  --gold-dim: rgba(197,148,75,0.15);
+  --gold-border: rgba(197,148,75,0.3);
+  --text: #e8e4dc;
+  --text-muted: #8a9ab0;
+  --text-dim: #4a5a70;
+  --success: #2dce89;
+  --success-bg: rgba(45,206,137,0.1);
+  --danger: #f75f5f;
+  --danger-bg: rgba(247,95,95,0.1);
+  --border: rgba(255,255,255,0.07);
+  --card: rgba(255,255,255,0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(197,148,75,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(197,148,75,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+/* Header */
+header { margin-bottom: 3rem; }
+.logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 0.5rem; }
+.logo-mark {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--gold-dim); border: 1px solid var(--gold-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 600; color: var(--gold); flex-shrink: 0;
+}
+.logo-text { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+.logo-sub { font-size: 13px; color: var(--text-muted); margin-right: 54px; }
+.header-divider { height: 1px; background: var(--border); margin-top: 1.5rem; }
+
+/* API Key section */
+.api-section {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+}
+.api-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
+.api-row { display: flex; gap: 10px; }
+.api-input {
+  flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text);
+  font-family: var(--mono); font-size: 13px; outline: none;
+  transition: border-color 0.2s;
+}
+.api-input:focus { border-color: var(--gold-border); }
+.api-input::placeholder { color: var(--text-dim); }
+
+/* Run button */
+.run-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 24px; background: var(--gold); color: var(--navy);
+  border: none; border-radius: var(--radius-sm); font-size: 14px;
+  font-weight: 600; font-family: 'IBM Plex Sans Arabic', sans-serif;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.run-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+.run-btn:active { transform: translateY(0); }
+.run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Schedule row */
+.schedule-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+.schedule-label { font-size: 13px; color: var(--text-muted); }
+.interval-select {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 6px 12px;
+  color: var(--text); font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-size: 13px; outline: none; cursor: pointer;
+}
+.auto-badge {
+  font-size: 11px; padding: 3px 8px; border-radius: 99px;
+  background: var(--success-bg); color: var(--success); font-weight: 500;
+  display: none;
+}
+
+/* Progress */
+.progress-wrap { margin-bottom: 1.5rem; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--gold); border-radius: 2px; transition: width 0.4s ease; }
+
+/* Status bar */
+.status-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem; font-size: 13px;
+  background: var(--card); border: 1px solid var(--border);
+  min-height: 42px;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.idle { background: var(--text-dim); }
+.status-dot.running { background: var(--gold); animation: pulse 1s ease-in-out infinite; }
+.status-dot.ok { background: var(--success); }
+.status-dot.err { background: var(--danger); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.status-text { color: var(--text-muted); flex: 1; }
+.status-time { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+
+/* Metrics */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.metric {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1rem 1.25rem;
+}
+.metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.3px; }
+.metric-val { font-size: 26px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+.metric-val.ok { color: var(--success); }
+.metric-val.err { color: var(--danger); }
+.metric-val.gold { color: var(--gold); }
+
+/* Filter tabs */
+.filter-row { display: flex; gap: 6px; margin-bottom: 1rem; }
+.ftab {
+  padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border); background: none; color: var(--text-muted);
+  cursor: pointer; font-family: 'IBM Plex Sans Arabic', sans-serif; transition: all 0.15s;
+}
+.ftab.active { background: var(--gold-dim); border-color: var(--gold-border); color: var(--gold); }
+
+/* Disclosure list */
+.disc-list { display: flex; flex-direction: column; gap: 6px; }
+.disc-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+  border-right: 3px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+.disc-item:hover { background: rgba(255,255,255,0.06); }
+.disc-item.matched { border-right-color: var(--success); }
+.disc-item.missing { border-right-color: var(--danger); background: var(--danger-bg); }
+.disc-icon {
+  width: 24px; height: 24px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  font-size: 12px; font-weight: 700;
+}
+.disc-icon.ok { background: var(--success-bg); color: var(--success); }
+.disc-icon.gap { background: var(--danger-bg); color: var(--danger); }
+.disc-body { flex: 1; min-width: 0; }
+.disc-title { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 3px; }
+.disc-date { font-size: 11px; color: var(--text-dim); font-family: var(--mono); }
+.disc-tag {
+  font-size: 10px; padding: 2px 8px; border-radius: 99px; flex-shrink: 0;
+  font-weight: 500; margin-top: 3px; white-space: nowrap;
+}
+.disc-tag.ok { background: var(--success-bg); color: var(--success); }
+.disc-tag.gap { background: var(--danger-bg); color: var(--danger); }
+
+/* Empty / Error state */
+.empty {
+  text-align: center; padding: 3rem 1rem; color: var(--text-muted);
+  font-size: 14px; line-height: 2;
+}
+.empty-icon { font-size: 36px; margin-bottom: 0.5rem; opacity: 0.3; }
+
+/* Alert banner */
+.alert-banner {
+  display: none; padding: 12px 16px; border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem; font-size: 13px; line-height: 1.6;
+  border: 1px solid; align-items: flex-start; gap: 10px;
+}
+.alert-banner.show { display: flex; }
+.alert-banner.danger { background: var(--danger-bg); border-color: rgba(247,95,95,0.3); color: #ff9999; }
+.alert-banner.success { background: var(--success-bg); border-color: rgba(45,206,137,0.3); color: #80e8b8; }
+
+/* Footer */
+footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.footer-text { font-size: 12px; color: var(--text-dim); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .api-row { flex-direction: column; }
+  .run-btn { width: 100%; justify-content: center; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-mark">ع</div>
+      <div class="logo-text">مراقب الإفصاحات</div>
+    </div>
+    <div class="logo-sub">أعيان للإيجار والاستثمار — بورصة الكويت #222</div>
+    <div class="header-divider"></div>
+  </header>
+
+  <!-- API Key -->
+  <div class="api-section">
+    <div class="api-label">مفتاح Anthropic API</div>
+    <div class="api-row">
+      <input class="api-input" type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
+      <button class="run-btn" id="run-btn" onclick="runCheck()">
+        <span id="btn-icon">▶</span>
+        <span id="btn-text">تشغيل الفحص</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Schedule -->
+  <div class="schedule-row">
+    <span class="schedule-label">الفحص التلقائي كل:</span>
+    <select class="interval-select" id="interval" onchange="reschedule()">
+      <option value="0">يدوي فقط</option>
+      <option value="1">ساعة واحدة</option>
+      <option value="3">3 ساعات</option>
+      <option value="6" selected>6 ساعات</option>
+      <option value="12">12 ساعة</option>
+      <option value="24">يومياً</option>
+    </select>
+    <span class="auto-badge" id="auto-badge">● تشغيل تلقائي</span>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap"><div class="progress-fill" id="progress"></div></div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="status-dot idle" id="status-dot"></div>
+    <span class="status-text" id="status-text">في انتظار تشغيل الفحص</span>
+    <span class="status-time" id="status-time"></span>
+  </div>
+
+  <!-- Alert banner -->
+  <div class="alert-banner" id="alert-banner">
+    <span id="alert-icon">⚠</span>
+    <span id="alert-text"></span>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">بورصة الكويت</div>
+      <div class="metric-val gold" id="m-boursa">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">موقع أعيان</div>
+      <div class="metric-val gold" id="m-aayan">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">متطابق</div>
+      <div class="metric-val ok" id="m-matched">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">فجوات</div>
+      <div class="metric-val err" id="m-gaps">—</div>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="filter-row" id="filter-row" style="display:none">
+    <button class="ftab active" onclick="applyFilter('all',this)">الكل</button>
+    <button class="ftab" onclick="applyFilter('gap',this)">فجوات فقط</button>
+    <button class="ftab" onclick="applyFilter('matched',this)">منشور على الموقعين</button>
+  </div>
+
+  <!-- List -->
+  <div class="disc-list" id="disc-list">
+    <div class="empty">
+      <div class="empty-icon">🔍</div>
+      أدخل مفتاح API واضغط "تشغيل الفحص"<br>
+      سيتم مقارنة إفصاحات بورصة الكويت مع موقع أعيان تلقائياً
+    </div>
+  </div>
+
+  <footer>
+    <span class="footer-text">أعيان للإيجار والاستثمار — إدارة الامتثال</span>
+    <span class="footer-text" id="next-run-label"></span>
+  </footer>
+
+</div>
+
+<script>
+let allItems = [];
+let scheduleTimer = null;
+let nextRunTime = null;
+
+function setProgress(p) {
+  document.getElementById('progress').style.width = p + '%';
+}
+
+function setStatus(state, text, time) {
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot ' + state;
+  document.getElementById('status-text').textContent = text;
+  document.getElementById('status-time').textContent = time || '';
+}
+
+function normalize(t) {
+  return (t || '').replace(/[،,\.\-:؛;"'«»()[\]]+/g, ' ')
+    .replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function similarity(a, b) {
+  const wa = new Set(normalize(a).split(' ').filter(w => w.length > 1));
+  const wb = new Set(normalize(b).split(' ').filter(w => w.length > 1));
+  if (!wa.size || !wb.size) return 0;
+  const inter = [...wa].filter(w => wb.has(w)).length;
+  return inter / Math.max(wa.size, wb.size);
+}
+
+function titlesMatch(t1, t2) { return similarity(t1, t2) >= 0.6; }
+
+async function callClaude(apiKey, systemPrompt, userPrompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  const clean = text.replace(/```json[\s\S]*?```/g, m => m.replace(/```json|```/g, '')).replace(/```/g, '').trim();
+  const match = clean.match(/\[[\s\S]*\]/);
+  if (!match) throw new Error('لم يتم إرجاع بيانات صالحة');
+  return JSON.parse(match[0]);
+}
+
+async function runCheck() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  if (!apiKey) {
+    alert('يرجى إدخال مفتاح Anthropic API أولاً');
+    return;
+  }
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  document.getElementById('btn-icon').textContent = '⟳';
+  document.getElementById('btn-text').textContent = 'جارٍ الفحص...';
+  document.getElementById('filter-row').style.display = 'none';
+  document.getElementById('alert-banner').classList.remove('show');
+  document.getElementById('disc-list').innerHTML = '<div class="empty"><div class="empty-icon" style="animation:pulse 1s infinite">◌</div>جارٍ جلب الإفصاحات من بورصة الكويت...</div>';
+
+  setProgress(10);
+  setStatus('running', 'جارٍ جلب إفصاحات بورصة الكويت (#222)...');
+
+  let boursa = [], aayan = [];
+
+  try {
+    boursa = await callClaude(
+      apiKey,
+      'أنت مساعد متخصص في جلب بيانات الإفصاحات المالية. ابحث في موقع بورصة الكويت عن إفصاحات شركة أعيان للإيجار والاستثمار (رمز #222). أعد فقط مصفوفة JSON بهذا الشكل: [{"title":"...","date":"..."}]. لا تُرجع أي نص آخر خارج المصفوفة.',
+      'ابحث عن أحدث إفصاحات شركة أعيان للإيجار والاستثمار رمز 222 على موقع بورصة الكويت boursakuwait.com.kw وأعد النتائج كمصفوفة JSON فقط.'
+    );
+  } catch(e) {
+    setStatus('err', 'فشل جلب بيانات بورصة الكويت: ' + e.message);
+    showError('فشل جلب بيانات بورصة الكويت: ' + e.message);
+    resetBtn(btn); setProgress(0); return;
+  }
+
+  setProgress(50);
+  setStatus('running', 'جارٍ جلب إفصاحات موقع أعيان...');
+  document.getElementById('disc-list').innerHTML = '<div class="empty"><div class="empty-icon">◌</div>جارٍ جلب الإفصاحات من موقع أعيان...</div>';
+
+  try {
+    aayan = await callClaude(
+      apiKey,
+      'أنت مساعد متخصص في جلب بيانات الإفصاحات المالية. ابحث في موقع شركة أعيان aayan.com/Disclosures عن قائمة الإفصاحات المنشورة. أعد فقط مصفوفة JSON بهذا الشكل: [{"title":"...","date":"..."}]. لا تُرجع أي نص آخر خارج المصفوفة.',
+      'ابحث عن قائمة الإفصاحات على موقع شركة أعيان aayan.com/Disclosures وأعد النتائج كمصفوفة JSON فقط.'
+    );
+  } catch(e) {
+    setStatus('err', 'فشل جلب بيانات موقع أعيان: ' + e.message);
+    showError('فشل جلب بيانات موقع أعيان: ' + e.message);
+    resetBtn(btn); setProgress(0); return;
+  }
+
+  setProgress(85);
+  setStatus('running', 'جارٍ المقارنة...');
+
+  allItems = boursa.map(b => ({
+    ...b,
+    matched: aayan.some(a => titlesMatch(b.title, a.title))
+  }));
+
+  const gaps = allItems.filter(i => !i.matched).length;
+  const matched = allItems.filter(i => i.matched).length;
+
+  document.getElementById('m-boursa').textContent = boursa.length;
+  document.getElementById('m-aayan').textContent = aayan.length;
+  document.getElementById('m-matched').textContent = matched;
+  document.getElementById('m-gaps').textContent = gaps;
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('ar-KW', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString('ar-KW', { day: 'numeric', month: 'long' });
+
+  if (gaps === 0) {
+    setStatus('ok', 'لا توجد فجوات — جميع الإفصاحات منشورة على الموقع الرسمي', dateStr + ' ' + timeStr);
+    showSuccess('✓ جميع الإفصاحات المدرجة في بورصة الكويت موجودة على موقع أعيان الرسمي.');
+  } else {
+    setStatus('err', `تم اكتشاف ${gaps} إفصاح غير منشور على موقع أعيان`, dateStr + ' ' + timeStr);
+    showDanger(`⚠ يوجد ${gaps} إفصاح مسجل في بورصة الكويت غير موجود على موقع أعيان الرسمي. يُرجى مراجعة البنود المُعلَّمة باللون الأحمر أدناه.`);
+  }
+
+  renderList(allItems);
+  document.getElementById('filter-row').style.display = gaps > 0 ? 'flex' : 'none';
+  setProgress(100);
+  setTimeout(() => setProgress(0), 800);
+  resetBtn(btn);
+  updateNextRunLabel();
+}
+
+function renderList(items) {
+  const el = document.getElementById('disc-list');
+  if (!items.length) { el.innerHTML = '<div class="empty">لم يتم العثور على إفصاحات</div>'; return; }
+  el.innerHTML = items.map(d => `
+    <div class="disc-item ${d.matched ? 'matched' : 'missing'}">
+      <div class="disc-icon ${d.matched ? 'ok' : 'gap'}">${d.matched ? '✓' : '✕'}</div>
+      <div class="disc-body">
+        <div class="disc-title">${d.title || '—'}</div>
+        <div class="disc-date">${d.date || ''}</div>
+      </div>
+      <span class="disc-tag ${d.matched ? 'ok' : 'gap'}">${d.matched ? 'منشور' : 'مفقود'}</span>
+    </div>
+  `).join('');
+}
+
+function applyFilter(type, btn) {
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = type === 'all' ? allItems : allItems.filter(i => type === 'gap' ? !i.matched : i.matched);
+  renderList(filtered);
+}
+
+function showError(msg) {
+  const b = document.getElementById('alert-banner');
+  b.className = 'alert-banner danger show';
+  document.getElementById('alert-text').textContent = msg;
+}
+function showDanger(msg) {
+  const b = document.getElementById('alert-banner');
+  b.className = 'alert-banner danger show';
+  document.getElementById('alert-text').textContent = msg;
+}
+function showSuccess(msg) {
+  const b = document.getElementById('alert-banner');
+  b.className = 'alert-banner success show';
+  document.getElementById('alert-text').textContent = msg;
+}
+
+function resetBtn(btn) {
+  btn.disabled = false;
+  document.getElementById('btn-icon').textContent = '▶';
+  document.getElementById('btn-text').textContent = 'تشغيل الفحص';
+}
+
+function reschedule() {
+  if (scheduleTimer) clearInterval(scheduleTimer);
+  const hours = parseInt(document.getElementById('interval').value);
+  const badge = document.getElementById('auto-badge');
+  const label = document.getElementById('next-run-label');
+  if (hours === 0) {
+    badge.style.display = 'none';
+    label.textContent = '';
+    nextRunTime = null;
+    return;
+  }
+  badge.style.display = 'inline';
+  const ms = hours * 60 * 60 * 1000;
+  nextRunTime = new Date(Date.now() + ms);
+  scheduleTimer = setInterval(() => runCheck(), ms);
+  updateNextRunLabel();
+}
+
+function updateNextRunLabel() {
+  if (!nextRunTime) return;
+  const label = document.getElementById('next-run-label');
+  label.textContent = 'الفحص القادم: ' + nextRunTime.toLocaleTimeString('ar-KW', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Save API key in session storage for convenience
+document.getElementById('api-key').addEventListener('input', function() {
+  sessionStorage.setItem('aayan_api_key', this.value);
+});
+const saved = sessionStorage.getItem('aayan_api_key');
+if (saved) document.getElementById('api-key').value = saved;
+</script>
+</body>
+</html>
